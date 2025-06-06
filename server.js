@@ -1,24 +1,28 @@
-const express=require('express');
+const express = require('express');
 require('dotenv').config();
-const mongoose= require('mongoose');
-const bodyParser= require('body-parser');
-const userRoutes= require('./userRoutes');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
-const PORT=process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+// Middleware
+app.use(cors()); // Allow frontend requests
+app.use(express.json()); // Parse JSON bodies
 
-mongoose.connect('mongodb://localhost:27017/login',
-                   {
-                                      useNewUrlParser:true,
-                                      useUinifieTopology:true
-                   }
-).then(()=>console.log('MongoDB connected')).
-catch(err=>console.log(err));
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/blog', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ MongoDB connected'))
+.catch((err) => console.error('❌ MongoDB connection error:', err));
 
-app.use('/api/users', userRoutes);           
+// Routes
+app.use('/api/users', userRoutes);
 
-app.listen(PORT, ()=>
-{console.log(`Server running on https/localhost:${PORT}`);
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
