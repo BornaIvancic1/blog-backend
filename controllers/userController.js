@@ -4,14 +4,14 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.register = async (req, res) => {
-  const { firstName, lastName, username, password } = req.body;
+  const { firstName, lastName, userName, password } = req.body;
 
-  if (!firstName || !lastName || !username || !password) {
+  if (!firstName || !lastName || !userName || !password) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
   try {
-    const user = new User({ firstName, lastName, username, password });
+    const user = new User({ firstName, lastName, userName, password });
     await user.save();
     res.status(201).json({ message: 'User registered' });
   } catch (err) {
@@ -20,21 +20,41 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
+  const { userName, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ message: 'Invalid username or password' });
+    console.log('Login attempt for username:', userName);  // Log incoming request
+    
+    const user = await User.findOne({ userName: userName });
+    if (!user) {
+      console.error('User not found:', userName);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
+    console.log('User found. Comparing password...');
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid username or password' });
+    if (!isMatch) {
+      console.error('Password mismatch for user:', userName);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, {
-      expiresIn: '1h'
-    });
+    console.log('Authentication successful. Generating JWT...');
+    const token = jwt.sign(
+      { id: user._id, userName: user.userName },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
     res.json({ token });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Login Error:', {
+      error: err.message,
+      stack: err.stack,
+      requestBody: req.body
+    });
+    res.status(500).json({ 
+      message: 'Authentication server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : null
+    });
   }
 };
