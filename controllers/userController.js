@@ -40,12 +40,25 @@ exports.login = async (req, res) => {
 
     console.log('Authentication successful. Generating JWT...');
     const token = jwt.sign(
-      { id: user._id, userName: user.userName },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+  { 
+    id: user._id, 
+    userName: user.userName,
+    firstname: user.firstName,  // Match frontend's lowercase
+    lastname: user.lastName 
+  },
+  JWT_SECRET,
+  { expiresIn: '1h' }
+);
 
-    res.json({ token });
+
+res.json({ 
+  token,
+  user: {
+    userName: user.userName,
+    firstname: user.firstName,
+    lastname: user.lastName
+  }
+});
   } catch (err) {
     console.error('Login Error:', {
       error: err.message,
