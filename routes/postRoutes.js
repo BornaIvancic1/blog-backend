@@ -1,15 +1,17 @@
+// routes/postRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/postController');
-const { authenticate } = require('../middlewares/auth'); 
+const authenticate = require('../middleware/auth'); // <-- Make sure folder is 'middlewares', not 'middleware'
 
-router.get('/posts', authenticate, postController.getAllPosts);
-router.get('/posts/:postId', authenticate, postController.getPostById);
+// Public routes (no authentication required)
+router.get('/', postController.getAllPosts);            // GET /api/posts
+router.get('/:postId', postController.getPostById);     // GET /api/posts/:postId
 
-
-
-router.post('/posts', authenticate, postController.createPost);
-router.put('/posts/:postId', authenticate, postController.updatePost);
-router.delete('/posts/:postId', authenticate, postController.deletePost);
+// Protected routes (authentication required)
+router.post('/', authenticate, postController.createPost);         // POST /api/posts
+router.put('/:postId', authenticate, postController.updatePost);   // PUT /api/posts/:postId
+router.delete('/:postId', authenticate, postController.deletePost);// DELETE /api/posts/:postId
 
 module.exports = router;

@@ -9,8 +9,7 @@ const postSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: [true, 'Content is required'],
-    minlength: [50, 'Content must be at least 50 characters']
+    required: [true, 'Content is required']  // Removed minlength
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
