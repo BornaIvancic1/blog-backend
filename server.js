@@ -33,6 +33,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/blog')
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/chat/paraphrase', chatRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
