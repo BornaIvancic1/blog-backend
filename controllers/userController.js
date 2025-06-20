@@ -109,3 +109,26 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ message: 'Update failed', error: err.message });
   }
 };
+exports.search = async (req, res) => {
+  const { q } = req.query;
+
+  if (!q || q.trim() === '') {
+    return res.status(400).json({ message: 'Search query is required' });
+  }
+
+  try {
+    // Case-insensitive search across firstName, lastName, or userName
+    const regex = new RegExp(q, 'i');
+    const users = await User.find({
+      $or: [
+        { firstName: regex },
+        { lastName: regex },
+        { userName: regex }
+      ]
+    }).select('firstName lastName userName');
+
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ message: 'Search failed', error: err.message });
+  }
+};
