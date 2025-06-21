@@ -109,7 +109,7 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ message: 'Update failed', error: err.message });
   }
 };
-exports.search = async (req, res) => {
+exports.searchUsers = async (req, res) => {
   const { q } = req.query;
 
   if (!q || q.trim() === '') {
