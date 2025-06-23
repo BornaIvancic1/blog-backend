@@ -62,3 +62,14 @@ export const paraphraseWithGemini = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getDailyTip = async (req,res) => {
+  try {
+  const prompt = "Give me a different, short, practical productivity tip or motivational quote each time you are asked. Return only the tip or quote, nothing else.";
+
+   const tip = await getGeminiResponse(prompt);
+    res.json({ tip });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
