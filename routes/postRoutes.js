@@ -13,5 +13,7 @@ router.get('/:postId', postController.getPostById);     // GET /api/posts/:postI
 router.post('/', authenticate, postController.createPost);         // POST /api/posts
 router.put('/:postId', authenticate, postController.updatePost);   // PUT /api/posts/:postId
 router.delete('/:postId', authenticate, postController.deletePost);// DELETE /api/posts/:postId
+router.get('/:userId', authenticate, postController.getPostsByUser);
+
 
 module.exports = router;

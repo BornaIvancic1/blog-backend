@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -132,26 +134,20 @@ exports.searchUsers = async (req, res) => {
     res.status(500).json({ message: 'Search failed', error: err.message });
   }
 };
+
 exports.getUser = async (req, res) => {
   try {
     const userId = req.params.id;
-    
-    // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
-
     const user = await User.findById(userId).select('-password');
-    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
     res.json({ user });
   } catch (err) {
-    res.status(500).json({ 
-      message: 'Error fetching user',
-      error: err.message 
-    });
+    console.error('Error fetching user:', err);
+    res.status(500).json({ message: 'Error fetching user', error: err.message });
   }
 };

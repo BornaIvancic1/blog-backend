@@ -117,3 +117,19 @@ exports.getPostById = async (req, res) => {
     });
   }
 };
+exports.getPostsByUser = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const posts = await Post.find({ author: userId })
+      .populate('author', 'userName firstName lastName')
+      .sort({ createdAt: -1 });
+
+    res.json({ posts });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Error fetching posts for user',
+      error: err.message,
+    });
+  }
+};
