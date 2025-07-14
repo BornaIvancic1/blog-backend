@@ -1,6 +1,7 @@
 // controllers/postController.js
 const { json } = require('express');
 const Post = require('../models/Post');
+const mongoose = require('mongoose');
 
 // Create Post
 exports.createPost = async (req, res) => {
@@ -120,16 +121,32 @@ exports.getPostById = async (req, res) => {
 exports.getPostsByUser = async (req, res) => {
   const userId = req.params.userId;
 
+  // Validate user ID format
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ 
+      message: 'Invalid user ID format',
+      error: 'User ID must be a valid MongoDB ObjectId'
+    });
+  }
+
   try {
+    console.log(`Fetching posts for user: ${userId}`);
     const posts = await Post.find({ author: userId })
       .populate('author', 'userName firstName lastName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
+    console.log(`Found ${posts.length} posts for user ${userId}`);
     res.json({ posts });
   } catch (err) {
+    console.error('Error fetching user posts:', {
+      userId,
+      error: err.message,
+      stack: err.stack
+    });
     res.status(500).json({
       message: 'Error fetching posts for user',
-      error: err.message,
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
     });
   }
 };
