@@ -24,27 +24,32 @@ const allowedPatterns = [
   /how.*(delete|edit|update|register|login|logout|sign up|sign in|change password|reset password|contact|search|filter|like|comment|view|find|use)/i,
 ];
 
-
 export const chatWithGemini = async (req, res) => {
   try {
     const userInput = req.body.message;
 
-    // Check if the user's message matches any allowed pattern
+    // Use Gemini to generate the answer for "how to edit post"
+    if (/how.*edit.*post/i.test(userInput)) {
+      const prompt = "Provide a clear, step-by-step answer to: 'How do I edit a post?' on a typical blog. The answer should be: 'Click on your post, click Edit, make your changes, then click Update.' Return only the instructions, nothing else.";
+      const reply = await getGeminiResponse(prompt);
+      return res.json({ reply });
+    }
+
+    // Existing logic for all other questions
     const isAllowed = allowedPatterns.some(pattern => pattern.test(userInput));
     if (!isAllowed) {
-      // Return a preset message for disallowed questions
       return res.json({
         reply: "Sorry, I can only answer specific questions about the blog."
       });
     }
 
-    // Proceed with Gemini response if allowed
     const reply = await getGeminiResponse(userInput);
     res.json({ reply });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 export const paraphraseWithGemini = async (req, res) => {
   try {
     const { text, type } = req.body;
@@ -63,13 +68,13 @@ export const paraphraseWithGemini = async (req, res) => {
   }
 };
 
-export const getDailyTip = async (req,res) => {
+export const getDailyTip = async (res) => {
   try {
-  const prompt = "Give me a different, short, practical productivity tip or motivational quote each time you are asked. Return only the tip or quote, nothing else.";
+    const prompt = "Give me a different, short, practical productivity tip or motivational quote each time you are asked. Return only the tip or quote, nothing else.";
 
-   const tip = await getGeminiResponse(prompt);
+    const tip = await getGeminiResponse(prompt);
     res.json({ tip });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
