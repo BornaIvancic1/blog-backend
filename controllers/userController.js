@@ -1,9 +1,64 @@
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
-
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID; 
+
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+exports.registerWithGoogle = async (req, res) => {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({ message: 'Google token required' });
+  }
+  try {
+    // 1. Verify the Google ID token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { sub, email, given_name, family_name } = payload;
+
+    // 2. Check for existing user or create new one
+    let user = await User.findOne({ googleId: sub });
+    if (!user) {
+      user = new User({
+        firstName: given_name,
+        lastName: family_name,
+        userName: email,
+        password: '', // or null if using only Google login
+        googleId: sub,
+        // add any additional fields
+      });
+      await user.save();
+    }
+
+    // 3. Issue JWT as with normal registration/login
+    const jwtToken = jwt.sign(
+      {
+        id: user._id,
+        userName: user.userName,
+        firstname: user.firstName,
+        lastname: user.lastName
+      },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    return res.json({
+      token: jwtToken,
+      user: {
+        userName: user.userName,
+        firstname: user.firstName,
+        lastname: user.lastName
+      }
+    });
+  } catch (err) {
+    return res.status(400).json({ message: 'Invalid Google token', error: err.message });
+  }
+};
 
 exports.register = async (req, res) => {
   const { firstName, lastName, userName, password } = req.body;
