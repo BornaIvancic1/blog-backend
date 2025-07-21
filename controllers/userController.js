@@ -7,7 +7,12 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-exports.registerWithGoogle = async (req, res) => {
+const axios = require('axios');
+
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+
+exports.loginWithGoogle = async (req, res) => {
   const { token } = req.body;
   if (!token) {
     return res.status(400).json({ message: 'Google token required' });
@@ -59,6 +64,89 @@ exports.registerWithGoogle = async (req, res) => {
     return res.status(400).json({ message: 'Invalid Google token', error: err.message });
   }
 };
+
+
+const querystring = require('querystring'); // built-in in Node.js
+
+exports.loginWithGitHub = async (req, res) => {
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).json({ message: 'GitHub code required' });
+  }
+
+  try {
+    // 1. Exchange code for access token
+    const accessTokenRes = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      querystring.stringify({
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: GITHUB_CLIENT_SECRET,
+        code,
+      }),
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    const accessToken = accessTokenRes.data.access_token;
+    if (!accessToken) {
+      return res.status(400).json({ message: 'Failed to retrieve GitHub token' });
+    }
+
+    // 2. Get user info from GitHub
+    const userRes = await axios.get('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    const { id, name, login } = userRes.data;
+
+    // 3. Check for existing user or create new one
+    let user = await User.findOne({ githubId: id });
+
+    if (!user) {
+      user = new User({
+        firstName: name || login,
+        lastName: '',
+        userName: login,
+        password: '',
+        githubId: id,
+      });
+      await user.save();
+    }
+
+    // 4. Issue JWT
+    const jwtToken = jwt.sign(
+      {
+        id: user._id,
+        userName: user.userName,
+        firstname: user.firstName,
+        lastname: user.lastName,
+      },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    return res.json({
+      token: jwtToken,
+      user: {
+        userName: user.userName,
+        firstname: user.firstName,
+        lastname: user.lastName,
+      },
+    });
+  } catch (err) {
+    console.error('GitHub login error:', err.message);
+    return res.status(400).json({ message: 'GitHub login failed', error: err.message });
+  }
+};
+
 
 exports.register = async (req, res) => {
   const { firstName, lastName, userName, password } = req.body;

@@ -3,21 +3,25 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
-  lastName:  { type: String, required: true },
+  lastName:  { type: String, required: false },
   userName:  { type: String, required: true, unique: true },
-  password:  { type: String }, // <-- no longer hard-required
-  googleId:  { type: String, unique: true, sparse: true }, // <-- new
+  password:  { type: String }, // Optional for OAuth users
+  googleId:  { type: String, unique: true, sparse: true },
+  githubId:  { type: String, unique: true, sparse: true }, // Add GitHub login support
 });
 
-// Only hash password if it's set and modified
+// Hash password only if modified and is present
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password') || !this.password) return next();
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-// Comparison for standard login
+// Password comparison method
 userSchema.methods.comparePassword = function(password) {
+  if (!this.password) return false; // No password set (OAuth user)
   return bcrypt.compare(password, this.password);
 };
 
