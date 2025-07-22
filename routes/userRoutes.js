@@ -6,6 +6,7 @@ const authenticate = require('../middleware/auth');
 router.post('/register',userController.register);
 router.post('/login/google', userController.loginWithGoogle);
 router.post('/login/github', userController.loginWithGitHub);
+router.post('/login/apple', userController.loginWithApple);
 router.post('/login',userController.login);
 router.patch('/update', authenticate, userController.updateUser);
 router.get('/search', authenticate, userController.searchUsers);

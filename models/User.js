@@ -5,12 +5,14 @@ const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   lastName:  { type: String, required: false },
   userName:  { type: String, required: true, unique: true },
-  password:  { type: String }, // Optional for OAuth users
+  password:  { type: String }, 
+
   googleId:  { type: String, unique: true, sparse: true },
-  githubId:  { type: String, unique: true, sparse: true }, // Add GitHub login support
+  githubId:  { type: String, unique: true, sparse: true },
+  appleId:   { type: String, unique: true, sparse: true }
 });
 
-// Hash password only if modified and is present
+// Hash password only if modified and exists
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password') || !this.password) {
     return next();
@@ -19,9 +21,9 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
-// Password comparison method
+// Compare passwords for login
 userSchema.methods.comparePassword = function(password) {
-  if (!this.password) return false; // No password set (OAuth user)
+  if (!this.password) return false; // No password for OAuth-only users
   return bcrypt.compare(password, this.password);
 };
 
